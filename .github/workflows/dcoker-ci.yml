@@ -1,0 +1,31 @@
+name: Docker CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  docker-build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Build Docker image
+        run: docker build -t my-nginx:test .
+
+      - name: Show Docker images
+        run: docker images
+
+      - name: Test container starts
+        run: |
+          docker run -d --name test-nginx -p 8080:80 my-nginx:test
+          sleep 3
+          docker ps
+          docker stop test-nginx
+          docker rm test-nginx
