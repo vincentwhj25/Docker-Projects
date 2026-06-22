@@ -24,7 +24,7 @@ jobs:
 
       - name: Test container starts
         run: |
-          docker run -d --name test-nginx -p 8080:80 my-nginx:test
+          docker run -d --name testing-web -p 8080:80 my-nginx:v2
           sleep 3
           docker ps
           docker stop test-nginx
