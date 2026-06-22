@@ -28,4 +28,3 @@ jobs:
           sleep 3
           docker ps
           docker stop testing-web
-          docker rm testing-web
