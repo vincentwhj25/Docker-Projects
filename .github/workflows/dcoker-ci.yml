@@ -1,4 +1,4 @@
-name: Docker CI
+name: Docker CI and Push to GHCR
 
 on:
   push:
@@ -8,23 +8,38 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
-  docker-build-test:
+  docker-build-test-push:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Build Docker image
-        run: docker build -t my-nginx:v2 ./docker-lab
-
-      - name: Show Docker images
-        run: docker images
+      - name: Build Docker image for test
+        run: docker build -t my-nginx:test ./docker-lab
 
       - name: Test container starts
         run: |
-          docker run -d --name testing-web -p 8082:80 my-nginx:v2
+          docker run -d --name testing-web -p 8080:80 my-nginx:test
           sleep 3
           docker ps
+          curl http://localhost:8080
           docker stop testing-web
+          docker rm testing-web
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'push'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build Docker image for GHCR
+        if: github.event_name == 'push'
+        run: docker build -t ghcr.io/vincentwhj25/docker-projects/my-nginx:latest ./docker-lab
+
+      - name: Push Docker image to GHCR
+        if: github.event_name == 'push'
+        run: docker push ghcr.io/vincentwhj25/docker-projects/my-nginx:latest
