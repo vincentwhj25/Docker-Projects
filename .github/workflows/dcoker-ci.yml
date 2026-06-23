@@ -50,4 +50,4 @@ jobs:
             hostname
             cd /Projects
             git pull
-            ./scripts/deploy-ghcr.sh
+            ./Scripts/deploy-ghcr.sh
