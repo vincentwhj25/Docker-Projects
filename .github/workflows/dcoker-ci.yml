@@ -1,10 +1,7 @@
-name: Docker CI and Push to GHCR
+name: Docker CI/CD to Server
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
     branches:
       - main
 
@@ -13,7 +10,7 @@ permissions:
   packages: write
 
 jobs:
-  docker-build-test-push:
+  build-test-push-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,13 +30,24 @@ jobs:
           docker rm testing-web
 
       - name: Login to GitHub Container Registry
-        if: github.event_name == 'push'
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Build Docker image for GHCR
-        if: github.event_name == 'push'
         run: docker build -t ghcr.io/vincentwhj25/docker-projects/my-nginx:latest ./docker-lab
 
       - name: Push Docker image to GHCR
-        if: github.event_name == 'push'
         run: docker push ghcr.io/vincentwhj25/docker-projects/my-nginx:latest
+
+      - name: Deploy to Amazon Linux server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            whoami
+            hostname
+            cd /Projects
+            git pull
+            ./scripts/deploy-ghcr.sh
